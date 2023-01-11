@@ -1,21 +1,19 @@
 const puppeteer = require('puppeteer')
-const {describe} = require("mocha");
-
 
 
 const URL = "https://www.amazon.com/";
 const selectors = {
     searchBox : '#twotabsearchtextbox',
     productLinks : '[class="a-size-medium a-color-base a-text-normal"]',
-    nextButton : `//span[@class="a-size-medium a-color-base a-text-normal"]`,
-    productTitle : '#productTitle',
-    back: '[class="a-link-normal a-color-tertiary"]'
+    back: '[id="breadcrumb-back-link"]',
+    helpful: '[class="cr-helpful-text"]'
 };
 
-
 const productSearch = ['GoPro'];
-const random = Math.floor(Math.random() * productSearch.length)
-const randomValue = productSearch[random]
+const random = Math.floor(Math.random() * productSearch.length);
+const randomValue = productSearch[random];
+
+
 
 
 async function search () {
@@ -25,40 +23,26 @@ async function search () {
         await page.setViewport({width: 1280, height: 1300})
         await page.goto(URL, {timeout: 10000});
         await page.type(selectors.searchBox, randomValue);
-        await page.keyboard.press('Enter', {delay: 5000}); // ждет 5 секунд
-        const next = await page.$$(selectors.productLinks, {
-            timeout: 8000 // 8 секунд таймаут
-        });
+        await page.keyboard.press('Enter', {delay: 2000}); // ждет 5 секунд
 
-        await next[0].click();
-        await page.$$(selectors.productLinks, {
-            timeout: 8000 // 8 секунд таймаут
-        })
-        await page.goBack({timeout: 5000});
-        
+        for (let i = 0; i < 4; i++) {
+            const next = await page.$$(selectors.productLinks, {
+                timeout: 3000 // 8 секунд таймаут
+            });
+            await next[i].click({delay: 1000}); // клик по элементу первом
 
+
+            const helpful = await page.waitForSelector(selectors.helpful)
+            await helpful.click();
+
+            const back = await page.waitForSelector(selectors.back)
+            await back.click({delay: 5000}); // 5 сек возврат назад
+            await new Promise(r => setTimeout(r, 3000))
+        }
 
     }catch (error) {
         console.log(error)
     }
-
-}
-
-search();
-
-
-
-
-/*
-
-            await page.keyboard.press('Enter');
-            const next = await page.waitForSelector(selectors.nextButton);
-            await next.click();
-
-            await page.waitForXPath(selectors.productLinks);
-            const product = await page.$x(selectors.productLinks);
-            await product[2].click();
-            await page.waitForSelector(selectors.productTitle);
-            const title = await page.$eval(selectors.productTitle, (el) => el.innerHTML);
-            console.log (title);
-            await browser.close();*/
+}setInterval( () => {
+    search()
+}, 5000);
